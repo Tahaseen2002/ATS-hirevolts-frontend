@@ -29,7 +29,7 @@ export default function Dashboard() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/dashboard/stats', {
+      const response = await fetch('https://ats-portal-hirevolts.onrender.com/api/dashboard/stats', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
