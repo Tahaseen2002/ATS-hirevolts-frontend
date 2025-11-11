@@ -103,7 +103,7 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
     if (candidate.resumeUrl) {
       // Convert backend path to URL
       const resumeFileName = candidate.resumeUrl.split('\\').pop()?.split('/').pop();
-      const resumeUrl = `http://localhost:5000/uploads/${resumeFileName}`;
+      const resumeUrl = `https://ats-portal-hirevolts.onrender.com/api/uploads/${resumeFileName}`;
       window.open(resumeUrl, '_blank');
     }
   };
