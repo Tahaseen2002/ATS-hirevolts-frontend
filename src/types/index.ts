@@ -5,7 +5,7 @@ export interface Candidate {
   phone: string;
   position: string;
   experience: number;
-  status: 'New' | 'Screening' | 'Interview' | 'Offer' | 'Rejected';
+  status: 'New' | 'Screening' | 'Interview' | 'Offer' | 'Rejected' | 'Hired';
   resumeUrl?: string;
   skills: string[];
   appliedDate: string;

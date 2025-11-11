@@ -1,4 +1,4 @@
-import { MapPin, Calendar, DollarSign, Briefcase, Users, Plus, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Briefcase, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { Job } from '../types';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -17,6 +17,8 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
   const [appliedCandidates, setAppliedCandidates] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobDetails();
@@ -93,6 +95,44 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
       setStatusUpdating(false);
     }
   };
+
+  const handleCandidateStatusChange = async (candidateId: string, newStatus: string) => {
+    try {
+      setUpdatingCandidateId(candidateId);
+      await candidateApi.updateStatus(candidateId, newStatus);
+      
+      // Update local state
+      setAppliedCandidates(prev => 
+        prev.map(c => c.id === candidateId ? { ...c, status: newStatus } : c)
+      );
+      
+      toast.success('Candidate status updated successfully!');
+    } catch (err) {
+      console.error('Error updating candidate status:', err);
+      toast.error('Failed to update candidate status');
+    } finally {
+      setUpdatingCandidateId(null);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      // 'Applied': 'bg-blue-100 text-blue-700',
+      'Screening': 'bg-yellow-100 text-yellow-700',
+      'Interview': 'bg-purple-100 text-purple-700',
+      'Offer': 'bg-green-100 text-green-700',
+      'Hired': 'bg-green-200 text-green-800',
+      'Rejected': 'bg-red-100 text-red-700',
+      // 'Withdrawn': 'bg-gray-100 text-gray-700'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-700';
+  };
+
+  const filteredCandidates = statusFilter === 'all' 
+    ? appliedCandidates 
+    : appliedCandidates.filter(c => c.status === statusFilter);
+
+  const candidateStatuses = ['Screening', 'Interview', 'Offer', 'Hired', 'Rejected', ];
 
   const handleDeleteJob = async () => {
     if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
@@ -189,7 +229,7 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             <div className="flex items-center space-x-2">
               <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                Applied Candidates ({appliedCandidates.length})
+                Applied Candidates ({filteredCandidates.length}/{appliedCandidates.length})
               </h3>
             </div>
             <button
@@ -201,25 +241,52 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             </button>
           </div>
 
+          {/* Filter Section */}
+          <div className="mb-4 flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-600" />
+            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-gray-300 focus:outline-none focus:border-blue-600"
+            >
+              <option value="all">All Statuses</option>
+              {candidateStatuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="space-y-2 sm:space-y-3">
             {loading ? (
               <div className="text-center py-4 text-gray-500 text-sm">Loading candidates...</div>
-            ) : appliedCandidates.length === 0 ? (
-              <div className="text-center py-4 text-gray-500 text-sm">No candidates applied yet</div>
+            ) : filteredCandidates.length === 0 ? (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                {statusFilter === 'all' ? 'No candidates applied yet' : `No candidates with status "${statusFilter}"`}
+              </div>
             ) : (
-              appliedCandidates.map((candidate) => (
+              filteredCandidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className="p-3 border border-gray-200 hover:border-blue-600 transition-colors cursor-pointer"
+                className="p-3 border border-gray-200 hover:border-blue-600 transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{candidate.name}</h4>
                     <p className="text-xs sm:text-sm text-gray-600">{candidate.position}</p>
                   </div>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium whitespace-nowrap ml-2">
-                    {candidate.status}
-                  </span>
+                  <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <select
+                      value={candidate.status}
+                      onChange={(e) => handleCandidateStatusChange(candidate.id, e.target.value)}
+                      disabled={updatingCandidateId === candidate.id}
+                      className={`px-2 py-1 text-xs font-medium border border-gray-300 focus:outline-none focus:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(candidate.status)}`}
+                    >
+                      {candidateStatuses.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
               ))

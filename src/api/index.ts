@@ -72,6 +72,17 @@ export const candidateApi = {
     });
     if (!response.ok) throw new Error('Failed to delete candidate');
     return response.json();
+  },
+
+  // Update candidate status
+  updateStatus: async (id: string, status: string) => {
+    const response = await fetch(`${API_BASE_URL}/candidates/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) throw new Error('Failed to update candidate status');
+    return response.json();
   }
 };
 
