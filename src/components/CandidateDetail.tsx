@@ -103,15 +103,17 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
     if (candidate.resumeUrl) {
       // Check if it's a Cloudinary URL (starts with http)
       if (candidate.resumeUrl.startsWith('http')) {
-        // For Cloudinary URLs, modify to display inline instead of download
+        // For Cloudinary URLs, we need to open in iframe or use Google Docs Viewer
         let resumeUrl = candidate.resumeUrl;
         
-        if (resumeUrl.includes('cloudinary.com')) {
-          // Add fl_attachment:false to force inline viewing instead of download
-          resumeUrl = resumeUrl.replace('/upload/', '/upload/fl_attachment:false/');
+        if (resumeUrl.includes('cloudinary.com') && resumeUrl.includes('.pdf')) {
+          // Use Google Docs Viewer to display PDF inline
+          const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resumeUrl)}&embedded=true`;
+          window.open(viewerUrl, '_blank');
+        } else {
+          // For other file types or non-Cloudinary URLs
+          window.open(resumeUrl, '_blank');
         }
-        
-        window.open(resumeUrl, '_blank');
       } else {
         // Local file path - convert to URL
         const resumeFileName = candidate.resumeUrl.split('\\').pop()?.split('/').pop();
