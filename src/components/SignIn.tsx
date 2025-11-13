@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SignInProps {
   onSignIn: (token: string, user: any) => void;
@@ -46,10 +47,13 @@ export default function SignIn({ onSignIn, onSwitchToSignUp }: SignInProps) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      toast.success('Signed in successfully!');
       onSignIn(data.token, data.user);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+      const errorMsg = err.message || 'Failed to sign in';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

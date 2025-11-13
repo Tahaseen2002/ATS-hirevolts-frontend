@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface SignUpProps {
   onSignUp: (token: string, user: any) => void;
@@ -88,10 +89,13 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
+      toast.success('Account created successfully!');
       onSignUp(data.token, data.user);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+      const errorMsg = err.message || 'Failed to sign up';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
