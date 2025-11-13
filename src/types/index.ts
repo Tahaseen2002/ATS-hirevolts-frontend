@@ -7,6 +7,7 @@ export interface Candidate {
   experience: number;
   status: 'New' | 'Screening' | 'Interview' | 'Offer' | 'Rejected' | 'Hired';
   resumeUrl?: string;
+  viewUrl?: string; // Backend proxy URL for viewing resume inline
   skills: string[];
   appliedDate: string;
   location: string;

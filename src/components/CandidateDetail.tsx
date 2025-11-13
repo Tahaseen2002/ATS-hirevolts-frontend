@@ -100,26 +100,27 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
   };
 
   const handleViewResume = () => {
+    if (candidate.viewUrl) {
+      // Use the viewUrl provided by backend
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const fullUrl = `${apiUrl}${candidate.viewUrl}`;
+      console.log('Opening resume at:', fullUrl); // Debug log
+      window.open(fullUrl, '_blank');
+    } else if (candidate.resumeUrl) {
+      // Fallback: construct URL if viewUrl is not available
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const viewUrl = `${apiUrl}/api/candidates/${candidate.id}/view-resume`;
+      console.log('Opening resume at (fallback):', viewUrl); // Debug log
+      window.open(viewUrl, '_blank');
+    } else {
+      console.error('No resume URL available');
+    }
+  };
+
+  const handleDownloadResume = () => {
     if (candidate.resumeUrl) {
-      // Check if it's a Cloudinary URL (starts with http)
-      if (candidate.resumeUrl.startsWith('http')) {
-        // For Cloudinary URLs, we need to open in iframe or use Google Docs Viewer
-        let resumeUrl = candidate.resumeUrl;
-        
-        if (resumeUrl.includes('cloudinary.com') && resumeUrl.includes('.pdf')) {
-          // Use Google Docs Viewer to display PDF inline
-          const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(resumeUrl)}&embedded=true`;
-          window.open(viewerUrl, '_blank');
-        } else {
-          // For other file types or non-Cloudinary URLs
-          window.open(resumeUrl, '_blank');
-        }
-      } else {
-        // Local file path - convert to URL
-        const resumeFileName = candidate.resumeUrl.split('\\').pop()?.split('/').pop();
-        const resumeUrl = `https://ats-portal-hirevolts.onrender.com/api/uploads/${resumeFileName}`;
-        window.open(resumeUrl, '_blank');
-      }
+      // For download, we can use the direct Cloudinary URL
+      window.open(candidate.resumeUrl, '_blank');
     }
   };
 
@@ -290,7 +291,10 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
               Schedule Interview
             </button>
             {candidate.resumeUrl && (
-              <button className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors">
+              <button 
+                onClick={handleDownloadResume}
+                className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors"
+              >
                 Download Resume
               </button>
             )}

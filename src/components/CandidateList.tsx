@@ -35,7 +35,8 @@ export default function CandidateList() {
         skills: candidate.skills || [],
         appliedDate: new Date(candidate.appliedDate).toISOString().split('T')[0],
         location: candidate.location,
-        resumeUrl: candidate.resumeUrl
+        resumeUrl: candidate.resumeUrl,
+        viewUrl: candidate.viewUrl // Include viewUrl from backend
       }));
       setCandidates(transformedData);
       setError('');
