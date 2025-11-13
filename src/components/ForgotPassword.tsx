@@ -50,7 +50,7 @@ export default function ForgotPassword() {
         console.log('PASSWORD RESET CODE:', data.resetToken);
         console.log('Email:', email);
         console.log('='.repeat(50));
-        toast.success(`Your code is: ${data.resetToken}`, { duration: 10000 });
+        toast.success(`Your code is: ${data.resetToken}`, { duration: 5000 });
       }
       setStep('verify');
     } catch (err: any) {
