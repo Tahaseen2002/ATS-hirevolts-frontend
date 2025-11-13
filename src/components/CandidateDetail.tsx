@@ -287,9 +287,9 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
                 <span>View Resume</span>
               </button>
             )}
-            <button className="w-full border border-blue-600 text-blue-600 py-2 px-4 text-sm sm:text-base hover:bg-blue-50 transition-colors">
+            {/* <button className="w-full border border-blue-600 text-blue-600 py-2 px-4 text-sm sm:text-base hover:bg-blue-50 transition-colors">
               Schedule Interview
-            </button>
+            </button> */}
             {candidate.resumeUrl && (
               <button 
                 onClick={handleDownloadResume}
@@ -298,9 +298,9 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
                 Download Resume
               </button>
             )}
-            <button className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors">
+            {/* <button className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors">
               Send Email
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
