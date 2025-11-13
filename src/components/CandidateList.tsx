@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, X, Grid3x3, List } from 'lucide-react';
+import { Search, Plus, X, Grid3x3, List, Upload } from 'lucide-react';
 import { Candidate } from '../types';
 import CandidateDetail from './CandidateDetail';
 import AddCandidateModal from './AddCandidateModal';
+import BulkUploadModal from './BulkUploadModal';
 import { candidateApi } from '../api';
 
 export default function CandidateList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'table'>('card');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -101,13 +103,22 @@ export default function CandidateList() {
           )}
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">Candidates</h2>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Add Candidate</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowBulkUploadModal(true)}
+                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 hover:bg-green-700 transition-colors"
+              >
+                <Upload className="w-5 h-5" />
+                <span>Bulk Upload</span>
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add Candidate</span>
+              </button>
+            </div>
           </div>
 
           <div className="relative">
@@ -257,6 +268,13 @@ export default function CandidateList() {
           onClose={handleCloseModal} 
           onSuccess={handleAddSuccess}
           editCandidate={editingCandidate}
+        />
+      )}
+
+      {showBulkUploadModal && (
+        <BulkUploadModal
+          onClose={() => setShowBulkUploadModal(false)}
+          onSuccess={handleAddSuccess}
         />
       )}
     </div>
