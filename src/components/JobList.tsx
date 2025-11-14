@@ -15,6 +15,7 @@ export default function JobList() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasUserClosedDetail, setHasUserClosedDetail] = useState(false);
   const itemsPerPage = 10;
 
   // Filter jobs based on search query
@@ -49,12 +50,12 @@ export default function JobList() {
     fetchJobs();
   }, []);
 
-  // Auto-select first job when jobs are initially loaded
+  // Auto-select first job when jobs are initially loaded (only if user hasn't explicitly closed it)
   useEffect(() => {
-    if (jobs.length > 0 && !selectedJob) {
+    if (jobs.length > 0 && !selectedJob && !hasUserClosedDetail) {
       setSelectedJob(jobs[0]);
     }
-  }, [jobs]);
+  }, [jobs, selectedJob, hasUserClosedDetail]);
 
   // Handle selection when filtered results change
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function JobList() {
       if (!isSelectedInFiltered) {
         setSelectedJob(filteredJobs[0]);
         setCurrentPage(1); // Reset to first page when selection changes
+        setHasUserClosedDetail(false); // Reset flag when auto-selecting
       }
     } else if (filteredJobs.length === 0 && selectedJob) {
       // Clear selection if no filtered results
@@ -237,11 +239,14 @@ export default function JobList() {
             </div>
           ) : viewMode === 'card' ? (
             <>
-              <div className="p-4 space-y-3">
+              <div className={`p-4 ${selectedJob ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                 {paginatedJobs.map((job) => (
                 <div
                   key={job.id}
-                  onClick={() => setSelectedJob(job)}
+                  onClick={() => {
+                    setSelectedJob(job);
+                    setHasUserClosedDetail(false);
+                  }}
                   className={`p-4 border cursor-pointer transition-all ${
                     selectedJob?.id === job.id
                       ? 'bg-blue-50 border-blue-600 shadow-md'
@@ -352,7 +357,10 @@ export default function JobList() {
                     {paginatedJobs.map((job) => (
                     <tr
                       key={job.id}
-                      onClick={() => setSelectedJob(job)}
+                      onClick={() => {
+                        setSelectedJob(job);
+                        setHasUserClosedDetail(false);
+                      }}
                       className={`border-b cursor-pointer transition-colors ${
                         selectedJob?.id === job.id
                           ? 'bg-blue-50'
@@ -438,7 +446,10 @@ export default function JobList() {
       {selectedJob && (
         <div className="fixed lg:relative inset-0 lg:w-3/5 bg-white z-50 lg:z-auto lg:block">
           <button
-            onClick={() => setSelectedJob(null)}
+            onClick={() => {
+              setSelectedJob(null);
+              setHasUserClosedDetail(true);
+            }}
             className="absolute top-4 right-4 p-2 hover:bg-gray-100 transition-colors z-10"
           >
             <X className="w-5 h-5 text-gray-600" />
@@ -447,7 +458,10 @@ export default function JobList() {
             job={selectedJob} 
             onEdit={handleEdit}
             onRefresh={fetchJobs}
-            onClose={() => setSelectedJob(null)}
+            onClose={() => {
+              setSelectedJob(null);
+              setHasUserClosedDetail(true);
+            }}
           />
         </div>
       )}
