@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Grid3x3, List, Search, Briefcase, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Grid3x3, List, Search, Briefcase, ChevronLeft, ChevronRight, MapPin, FileText } from 'lucide-react';
 import { Job } from '../types';
 import JobDetail from './JobDetail';
 import AddJobModal from './AddJobModal';
 import { jobApi } from '../api';
+import RupeeSymbol from './RupeeSymbol';
 
 export default function JobList() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -15,6 +16,7 @@ export default function JobList() {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasUserClosedDetail, setHasUserClosedDetail] = useState(false);
   const itemsPerPage = 10;
 
   // Filter jobs based on search query
@@ -49,12 +51,12 @@ export default function JobList() {
     fetchJobs();
   }, []);
 
-  // Auto-select first job when jobs are initially loaded
+  // Auto-select first job when jobs are initially loaded (only if user hasn't explicitly closed it)
   useEffect(() => {
-    if (jobs.length > 0 && !selectedJob) {
+    if (jobs.length > 0 && !selectedJob && !hasUserClosedDetail) {
       setSelectedJob(jobs[0]);
     }
-  }, [jobs]);
+  }, [jobs, selectedJob, hasUserClosedDetail]);
 
   // Handle selection when filtered results change
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function JobList() {
       if (!isSelectedInFiltered) {
         setSelectedJob(filteredJobs[0]);
         setCurrentPage(1); // Reset to first page when selection changes
+        setHasUserClosedDetail(false); // Reset flag when auto-selecting
       }
     } else if (filteredJobs.length === 0 && selectedJob) {
       // Clear selection if no filtered results
@@ -237,11 +240,14 @@ export default function JobList() {
             </div>
           ) : viewMode === 'card' ? (
             <>
-              <div className="p-4 space-y-3">
+              <div className={`p-4 ${selectedJob ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                 {paginatedJobs.map((job) => (
                 <div
                   key={job.id}
-                  onClick={() => setSelectedJob(job)}
+                  onClick={() => {
+                    setSelectedJob(job);
+                    setHasUserClosedDetail(false);
+                  }}
                   className={`p-4 border cursor-pointer transition-all ${
                     selectedJob?.id === job.id
                       ? 'bg-blue-50 border-blue-600 shadow-md'
@@ -265,13 +271,23 @@ export default function JobList() {
                     >
                       {job.type}
                     </span>
-                    <span className="text-xs text-gray-500">{job.location}</span>
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                      <span className="text-xs text-gray-500">{job.location}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{job.description}</p>
+                  <div className="flex items-start space-x-2 mb-2">
+                    <FileText className="w-3 h-3 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600 line-clamp-2">{job.description}</p>
+                  </div>
                   <div className="flex items-center space-x-2 mb-2">
-                    <DollarSign className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                    <span className="text-xs font-medium text-gray-700">
-                      {job.salary ? job.salary.replace(/\$/g, '₹') : ''}
+                    <span className="text-xs font-medium text-gray-700 rupee-symbol flex items-center">
+                      {job.salary ? (
+                        <>
+                          <RupeeSymbol />
+                          <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
+                        </>
+                      ) : ''}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -352,7 +368,10 @@ export default function JobList() {
                     {paginatedJobs.map((job) => (
                     <tr
                       key={job.id}
-                      onClick={() => setSelectedJob(job)}
+                      onClick={() => {
+                        setSelectedJob(job);
+                        setHasUserClosedDetail(false);
+                      }}
                       className={`border-b cursor-pointer transition-colors ${
                         selectedJob?.id === job.id
                           ? 'bg-blue-50'
@@ -367,7 +386,14 @@ export default function JobList() {
                           {job.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{job.salary.replace(/\$/g, '₹')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {job.salary ? (
+                          <span className="rupee-symbol flex items-center">
+                            <RupeeSymbol />
+                            <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
+                          </span>
+                        ) : ''}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 text-xs font-medium ${getStatusColor(job.status)}`}>
                           {job.status}
@@ -438,7 +464,10 @@ export default function JobList() {
       {selectedJob && (
         <div className="fixed lg:relative inset-0 lg:w-3/5 bg-white z-50 lg:z-auto lg:block">
           <button
-            onClick={() => setSelectedJob(null)}
+            onClick={() => {
+              setSelectedJob(null);
+              setHasUserClosedDetail(true);
+            }}
             className="absolute top-4 right-4 p-2 hover:bg-gray-100 transition-colors z-10"
           >
             <X className="w-5 h-5 text-gray-600" />
@@ -447,7 +476,10 @@ export default function JobList() {
             job={selectedJob} 
             onEdit={handleEdit}
             onRefresh={fetchJobs}
-            onClose={() => setSelectedJob(null)}
+            onClose={() => {
+              setSelectedJob(null);
+              setHasUserClosedDetail(true);
+            }}
           />
         </div>
       )}

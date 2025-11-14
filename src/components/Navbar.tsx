@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Briefcase, User, LogOut, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, LogOut, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 interface NavbarProps {
@@ -38,7 +38,10 @@ export default function Navbar({ activeTab, onTabChange, user, onSignOut }: Navb
     <nav className="sticky top-0 z-40 bg-white border-b border-gray-200">
       <div className="px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <button
+            onClick={() => onTabChange('dashboard')}
+            className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity cursor-pointer"
+          >
             <div className="flex items-center justify-center w-20 sm:w-32 h-8 sm:h-10 overflow-hidden">
               <img
                 src="/hirevolts-logo-DHaFBxL3.svg"
@@ -47,7 +50,7 @@ export default function Navbar({ activeTab, onTabChange, user, onSignOut }: Navb
               />
             </div>
             <h1 className="text-base sm:text-xl font-bold text-gray-900">- ATS Portal</h1>
-          </div>
+          </button>
 
           <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
             <button

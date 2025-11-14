@@ -18,6 +18,7 @@ export default function CandidateList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasUserClosedDetail, setHasUserClosedDetail] = useState(false);
   const itemsPerPage = 10;
 
   // Filter candidates based on search query
@@ -48,12 +49,12 @@ export default function CandidateList() {
     fetchCandidates();
   }, []);
 
-  // Auto-select first candidate when candidates are initially loaded
+  // Auto-select first candidate when candidates are initially loaded (only if user hasn't explicitly closed it)
   useEffect(() => {
-    if (candidates.length > 0 && !selectedCandidate) {
+    if (candidates.length > 0 && !selectedCandidate && !hasUserClosedDetail) {
       setSelectedCandidate(candidates[0]);
     }
-  }, [candidates, selectedCandidate]);
+  }, [candidates, selectedCandidate, hasUserClosedDetail]);
 
   // Update selected candidate when candidates list is refreshed
   useEffect(() => {
@@ -73,6 +74,7 @@ export default function CandidateList() {
       if (!isSelectedInFiltered) {
         setSelectedCandidate(filteredCandidates[0]);
         setCurrentPage(1); // Reset to first page when selection changes
+        setHasUserClosedDetail(false); // Reset flag when auto-selecting
       }
     } else if (filteredCandidates.length === 0 && selectedCandidate) {
       // Clear selection if no filtered results
@@ -282,11 +284,14 @@ export default function CandidateList() {
             </div>
           ) : viewMode === 'card' ? (
             <>
-              <div className="p-4 space-y-3">
+              <div className={`p-4 ${selectedCandidate ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                 {paginatedCandidates.map((candidate) => (
                 <div
                   key={candidate.id}
-                  onClick={() => setSelectedCandidate(candidate)}
+                  onClick={() => {
+                    setSelectedCandidate(candidate);
+                    setHasUserClosedDetail(false);
+                  }}
                   className={`p-4 border cursor-pointer transition-all ${
                     selectedCandidate?.id === candidate.id
                       ? 'bg-blue-50 border-blue-600 shadow-md'
@@ -399,7 +404,10 @@ export default function CandidateList() {
                     {paginatedCandidates.map((candidate) => (
                     <tr
                       key={candidate.id}
-                      onClick={() => setSelectedCandidate(candidate)}
+                      onClick={() => {
+                        setSelectedCandidate(candidate);
+                        setHasUserClosedDetail(false);
+                      }}
                       className={`border-b cursor-pointer transition-colors ${
                         selectedCandidate?.id === candidate.id
                           ? 'bg-blue-50'
@@ -491,7 +499,10 @@ export default function CandidateList() {
       {selectedCandidate && (
         <div className="fixed lg:relative inset-0 lg:w-3/5 bg-white z-50 lg:z-auto lg:block">
           <button
-            onClick={() => setSelectedCandidate(null)}
+            onClick={() => {
+              setSelectedCandidate(null);
+              setHasUserClosedDetail(true);
+            }}
             className="absolute top-4 right-4 p-2 hover:bg-gray-100 transition-colors z-10"
           >
             <X className="w-5 h-5 text-gray-600" />
