@@ -99,7 +99,7 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
         company: exp.company || '',
         position: exp.position || '',
         duration: exp.duration || '',
-        description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+        description: Array.isArray(exp.description) ? exp.description.join('\n').trim() : (exp.description || '')
       }));
       setEditingWorkExperiences(formattedExperiences);
     } else {
@@ -127,12 +127,12 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
 
   const handleSaveEdit = () => {
     if (editingCandidate) {
-      // Format work experiences for submission
+      // Format work experiences for submission - keeping description as string for backend
       const formattedWorkExperiences = editingWorkExperiences.map(exp => ({
         company: exp.company,
         position: exp.position,
         duration: exp.duration,
-        description: exp.description
+        description: exp.description // Keep as string, not array
       })).filter(exp => exp.company || exp.position || exp.duration || exp.description);
       
       const updatedCandidate = {
@@ -176,8 +176,15 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
       formData.append('status', 'New');
       
       // Add work experience if available
+      // Ensure description is sent as string, not array
       if (candidate.workExperience && candidate.workExperience.length > 0) {
-        formData.append('workExperience', JSON.stringify(candidate.workExperience));
+        const formattedWorkExperiences = candidate.workExperience.map(exp => ({
+          company: exp.company || '',
+          position: exp.position || '',
+          duration: exp.duration || '',
+          description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+        }));
+        formData.append('workExperience', JSON.stringify(formattedWorkExperiences));
       }
 
       await candidateApi.uploadResume(formData);
@@ -233,8 +240,15 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
             formData.append('status', 'New');
             
             // Add work experience if available
+            // Ensure description is sent as string, not array
             if (candidate.workExperience && candidate.workExperience.length > 0) {
-              formData.append('workExperience', JSON.stringify(candidate.workExperience));
+              const formattedWorkExperiences = candidate.workExperience.map(exp => ({
+                company: exp.company || '',
+                position: exp.position || '',
+                duration: exp.duration || '',
+                description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+              }));
+              formData.append('workExperience', JSON.stringify(formattedWorkExperiences));
             }
 
             await candidateApi.uploadResume(formData);
