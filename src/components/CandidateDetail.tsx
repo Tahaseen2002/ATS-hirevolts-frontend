@@ -299,12 +299,13 @@ export default function CandidateDetail({ candidate, onEdit, onDelete }: Candida
                       Download Resume
                     </button>
                   )}
+                 
                   <button 
-                    onClick={() => setShowDeleteModal(true)}
-                    className="w-full bg-red-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                   onClick={() => setShowDeleteModal(true)}
+                    className="w-full border border-red-300 text-red-600 py-2 px-4 text-sm sm:text-base hover:bg-red-50 transition-colors flex items-center justify-center space-x-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span>Delete Candidate</span>
+                    <span>Delete Job</span>
                   </button>
                 </div>
               </div>
