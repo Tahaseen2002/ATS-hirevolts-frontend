@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, X, Grid3x3, List } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, X, Grid3x3, List, Search, Briefcase, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Job } from '../types';
 import JobDetail from './JobDetail';
 import AddJobModal from './AddJobModal';
@@ -13,10 +13,63 @@ export default function JobList() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Filter jobs based on search query
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      const titleMatch = job.title.toLowerCase().includes(query);
+      const locationMatch = job.location.toLowerCase().includes(query);
+      const salaryMatch = job.salary.toLowerCase().includes(query);
+      const requirementsMatch = job.requirements.some((req) => 
+        req.toLowerCase().includes(query)
+      );
+      
+      return titleMatch || locationMatch || salaryMatch || requirementsMatch;
+    });
+  }, [jobs, searchQuery]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchJobs();
   }, []);
+
+  // Auto-select first job when jobs are initially loaded
+  useEffect(() => {
+    if (jobs.length > 0 && !selectedJob) {
+      setSelectedJob(jobs[0]);
+    }
+  }, [jobs]);
+
+  // Handle selection when filtered results change
+  useEffect(() => {
+    if (selectedJob && filteredJobs.length > 0) {
+      // If selected job is not in filtered results, select first filtered job
+      const isSelectedInFiltered = filteredJobs.some(job => job.id === selectedJob.id);
+      if (!isSelectedInFiltered) {
+        setSelectedJob(filteredJobs[0]);
+        setCurrentPage(1); // Reset to first page when selection changes
+      }
+    } else if (filteredJobs.length === 0 && selectedJob) {
+      // Clear selection if no filtered results
+      setSelectedJob(null);
+    }
+  }, [filteredJobs, selectedJob]);
 
   const fetchJobs = async () => {
     try {
@@ -117,6 +170,17 @@ export default function JobList() {
             </button>
           </div>
 
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by job name, skills, location, or salary..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+            />
+          </div>
+
           <div className="flex items-center space-x-2 border-t border-gray-200 pt-4">
             <button
               onClick={() => setViewMode('card')}
@@ -149,12 +213,32 @@ export default function JobList() {
               <div className="text-gray-500">Loading jobs...</div>
             </div>
           ) : jobs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 px-4">
+              <div className="text-gray-400 mb-4">
+                <Briefcase className="w-16 h-16" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No jobs yet</h3>
+              <p className="text-gray-500 text-center mb-6 max-w-md">
+                Get started by creating your first job posting. Add job details, requirements, and start receiving applications.
+              </p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add Job</span>
+              </button>
+            </div>
+          ) : filteredJobs.length === 0 ? (
             <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">No jobs yet. Add your first job!</div>
+              <div className="text-gray-500 text-center">
+                {searchQuery ? 'No jobs found matching your search' : 'No jobs available'}
+              </div>
             </div>
           ) : viewMode === 'card' ? (
-            <div className="p-4 space-y-3">
-              {jobs.map((job) => (
+            <>
+              <div className="p-4 space-y-3">
+                {paginatedJobs.map((job) => (
                 <div
                   key={job.id}
                   onClick={() => setSelectedJob(job)}
@@ -183,7 +267,13 @@ export default function JobList() {
                     </span>
                     <span className="text-xs text-gray-500">{job.location}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-3 line-clamp-2">{job.description}</p>
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{job.description}</p>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <DollarSign className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                    <span className="text-xs font-medium text-gray-700">
+                      {job.salary ? job.salary.replace(/\$/g, '₹') : ''}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Posted: {job.postedDate}</span>
                     <span className="text-xs font-medium text-blue-600">
@@ -191,24 +281,75 @@ export default function JobList() {
                     </span>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                          return <span key={page} className="px-2 text-gray-500">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-white border-b-2 border-gray-300">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Title</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Salary</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Applicants</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobs.map((job) => (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-white border-b-2 border-gray-300">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Title</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Salary</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Applicants</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedJobs.map((job) => (
                     <tr
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
@@ -226,7 +367,7 @@ export default function JobList() {
                           {job.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{job.salary}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{job.salary.replace(/\$/g, '₹')}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 text-xs font-medium ${getStatusColor(job.status)}`}>
                           {job.status}
@@ -236,10 +377,60 @@ export default function JobList() {
                         {Array.isArray(job.appliedCandidates) ? job.appliedCandidates.length : 0}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                          return <span key={page} className="px-2 text-gray-500">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

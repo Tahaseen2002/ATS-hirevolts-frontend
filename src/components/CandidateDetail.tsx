@@ -15,6 +15,7 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
   const [selectedJobId, setSelectedJobId] = useState('');
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [activeTab, setActiveTab] = useState<'detail' | 'appliedJobs'>('detail');
 
   useEffect(() => {
     fetchAppliedJobs();
@@ -157,151 +158,166 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
         </div>
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <div className="flex items-center space-x-2 mb-3">
-            <Award className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Experience</h3>
-          </div>
-          <p className="text-sm sm:text-base text-gray-700">{candidate.experience} years of professional experience</p>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <div className="flex items-center space-x-2 mb-3">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">Skills</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {candidate.skills.map((skill, index) => (
-              <span
-                key={index}
-                className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 text-xs sm:text-sm font-medium"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/*  <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Status</h3>
-          <select
-            value={candidate.status}
-            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:border-blue-600"
+      {/* Tabs Navigation */}
+      <div className="border-t border-gray-200 mt-4 sm:mt-6">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('detail')}
+            className={`px-4 sm:px-6 py-3 text-sm sm:text-base font-medium transition-colors border-b-2 ${
+              activeTab === 'detail'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            <option>New</option>
-            <option>Screening</option>
-            <option>Interview</option>
-            <option>Offer</option>
-            <option>Rejected</option>
-          </select>
-        </div> */}
+            Detail
+          </button>
+          <button
+            onClick={() => setActiveTab('appliedJobs')}
+            className={`px-4 sm:px-6 py-3 text-sm sm:text-base font-medium transition-colors border-b-2 ${
+              activeTab === 'appliedJobs'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Applied Jobs
+          </button>
+        </div>
 
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <div className="flex items-center space-x-2 mb-3">
-            <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-              Applied Jobs ({appliedJobs.length})
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {loading ? (
-              <div className="text-center py-4 text-gray-500 text-sm">Loading applied jobs...</div>
-            ) : appliedJobs.length === 0 ? (
-              <div className="text-center py-4 text-gray-500 text-sm">No jobs applied yet</div>
-            ) : (
-              appliedJobs.map((job) => (
-              <div
-                key={job.id}
-                onClick={() => handleJobClick(job.id)}
-                className="p-3 border border-gray-200 hover:border-blue-600 transition-colors cursor-pointer"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{job.title}</h4>
-                    <p className="text-xs sm:text-sm text-gray-600">{job.department}</p>
-                    <p className="text-xs text-gray-500 mt-1">Applied: {job.appliedDate}</p>
-                  </div>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium whitespace-nowrap ml-2">
-                    {job.status}
-                  </span>
+        {/* Tab Content */}
+        <div className="pt-4 sm:pt-6">
+          {activeTab === 'detail' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Award className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Experience</h3>
+                </div>
+                <p className="text-sm sm:text-base text-gray-700">{candidate.experience} years of professional experience</p>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <div className="flex items-center space-x-2 mb-3">
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Skills</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {candidate.skills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 text-xs sm:text-sm font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
                 </div>
               </div>
-              ))
-            )}
-          </div>
-        </div>
 
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Apply to Job</h3>
-          {loading ? (
-            <div className="text-center py-4 text-gray-500 text-sm">Loading jobs...</div>
-          ) : availableJobs.length === 0 ? (
-            <div className="text-center py-4 text-gray-500 text-sm">
-              No open positions available at the moment
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Actions</h3>
+                <div className="space-y-2">
+                  {onEdit && (
+                    <button 
+                      onClick={() => onEdit(candidate)}
+                      className="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Edit Candidate</span>
+                    </button>
+                  )}
+                  {candidate.resumeUrl && (
+                    <button 
+                      onClick={handleViewResume}
+                      className="w-full border border-blue-600 text-blue-600 py-2 px-4 text-sm sm:text-base hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>View Resume</span>
+                    </button>
+                  )}
+                  {candidate.resumeUrl && (
+                    <button 
+                      onClick={handleDownloadResume}
+                      className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors"
+                    >
+                      Download Resume
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          ) : (
-            <>
-              <select 
-                value={selectedJobId}
-                onChange={(e) => setSelectedJobId(e.target.value)}
-                className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:border-blue-600 mb-3"
-                disabled={applying}
-              >
-                <option value="">Select a job...</option>
-                {availableJobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {job.title} - {job.department}
-                  </option>
-                ))}
-              </select>
-              <button 
-                onClick={handleApplyToJob}
-                disabled={!selectedJobId || applying}
-                className="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {applying ? 'Applying...' : 'Apply to Selected Job'}
-              </button>
-            </>
           )}
-        </div>
 
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Actions</h3>
-          <div className="space-y-2">
-            {onEdit && (
-              <button 
-                onClick={() => onEdit(candidate)}
-                className="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit Candidate</span>
-              </button>
-            )}
-            {candidate.resumeUrl && (
-              <button 
-                onClick={handleViewResume}
-                className="w-full border border-blue-600 text-blue-600 py-2 px-4 text-sm sm:text-base hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>View Resume</span>
-              </button>
-            )}
-            {/* <button className="w-full border border-blue-600 text-blue-600 py-2 px-4 text-sm sm:text-base hover:bg-blue-50 transition-colors">
-              Schedule Interview
-            </button> */}
-            {candidate.resumeUrl && (
-              <button 
-                onClick={handleDownloadResume}
-                className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors"
-              >
-                Download Resume
-              </button>
-            )}
-            {/* <button className="w-full border border-gray-300 text-gray-700 py-2 px-4 text-sm sm:text-base hover:bg-gray-50 transition-colors">
-              Send Email
-            </button> */}
-          </div>
+          {activeTab === 'appliedJobs' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    Applied Jobs ({appliedJobs.length})
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {loading ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">Loading applied jobs...</div>
+                  ) : appliedJobs.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500 text-sm">No jobs applied yet</div>
+                  ) : (
+                    appliedJobs.map((job) => (
+                      <div
+                        key={job.id}
+                        onClick={() => handleJobClick(job.id)}
+                        className="p-3 border border-gray-200 hover:border-blue-600 transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{job.title}</h4>
+                            <p className="text-xs sm:text-sm text-gray-600">{job.department}</p>
+                            <p className="text-xs text-gray-500 mt-1">Applied: {job.appliedDate}</p>
+                          </div>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium whitespace-nowrap ml-2">
+                            {job.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Apply to Job</h3>
+                {loading ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">Loading jobs...</div>
+                ) : availableJobs.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    No open positions available at the moment
+                  </div>
+                ) : (
+                  <>
+                    <select 
+                      value={selectedJobId}
+                      onChange={(e) => setSelectedJobId(e.target.value)}
+                      className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:border-blue-600 mb-3"
+                      disabled={applying}
+                    >
+                      <option value="">Select a job...</option>
+                      {availableJobs.map((job) => (
+                        <option key={job.id} value={job.id}>
+                          {job.title} - {job.department}
+                        </option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={handleApplyToJob}
+                      disabled={!selectedJobId || applying}
+                      className="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {applying ? 'Applying...' : 'Apply to Selected Job'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
