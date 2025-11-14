@@ -52,7 +52,17 @@ export default function CandidateList() {
     if (candidates.length > 0 && !selectedCandidate) {
       setSelectedCandidate(candidates[0]);
     }
-  }, [candidates]);
+  }, [candidates, selectedCandidate]);
+
+  // Update selected candidate when candidates list is refreshed
+  useEffect(() => {
+    if (selectedCandidate && candidates.length > 0) {
+      const updatedCandidate = candidates.find((c) => c.id === selectedCandidate.id);
+      if (updatedCandidate) {
+        setSelectedCandidate(updatedCandidate);
+      }
+    }
+  }, [candidates, selectedCandidate]);
 
   // Handle selection when filtered results change
   useEffect(() => {
@@ -91,7 +101,8 @@ export default function CandidateList() {
         appliedDate: new Date(candidate.appliedDate).toISOString().split('T')[0],
         location: candidate.location,
         resumeUrl: candidate.resumeUrl,
-        viewUrl: candidate.viewUrl // Include viewUrl from backend
+        viewUrl: candidate.viewUrl, // Include viewUrl from backend
+        workExperience: candidate.workExperience || [] // Include work experience
       }));
       setCandidates(transformedData);
       setError('');
@@ -102,6 +113,20 @@ export default function CandidateList() {
       setLoading(false);
     }
   };
+
+  // Update selected candidate when candidates list is refreshed
+  useEffect(() => {
+    if (selectedCandidate && candidates.length > 0) {
+      const updatedCandidate = candidates.find((c) => c.id === selectedCandidate.id);
+      if (updatedCandidate) {
+        // Update with fresh data from the server
+        setSelectedCandidate(updatedCandidate);
+      } else {
+        // If selected candidate no longer exists in the list, clear selection
+        setSelectedCandidate(null);
+      }
+    }
+  }, [candidates, selectedCandidate]);
 
   const handleAddSuccess = () => {
     fetchCandidates(); // Refresh the list

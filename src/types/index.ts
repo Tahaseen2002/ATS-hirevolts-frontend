@@ -1,3 +1,10 @@
+export interface WorkExperience {
+  company: string;
+  position: string;
+  duration: string;
+  description: string | string[]; // Can be either a string or array of strings
+}
+
 export interface Candidate {
   id: string;
   name: string;
@@ -11,6 +18,7 @@ export interface Candidate {
   skills: string[];
   appliedDate: string;
   location: string;
+  workExperience?: WorkExperience[];
 }
 
 export interface Job {
