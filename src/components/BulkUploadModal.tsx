@@ -1,7 +1,15 @@
-import { X, Upload, Check, Edit2, Loader, UserPlus } from 'lucide-react';
+import { X, Upload, Check, Edit2, Loader, UserPlus, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { candidateApi } from '../api';
 import toast from 'react-hot-toast';
+import { WorkExperience } from '../types';
+
+interface WorkExperienceForm {
+  company: string;
+  position: string;
+  duration: string;
+  description: string;
+}
 
 interface ParsedCandidate {
   id: string;
@@ -14,6 +22,7 @@ interface ParsedCandidate {
   skills: string[];
   resumePath: string;
   resumeText: string;
+  workExperience?: WorkExperience[];
   isEditing?: boolean;
   isAdded?: boolean;
 }
@@ -28,6 +37,7 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
   const [parsing, setParsing] = useState(false);
   const [parsedCandidates, setParsedCandidates] = useState<ParsedCandidate[]>([]);
   const [editingCandidate, setEditingCandidate] = useState<ParsedCandidate | null>(null);
+  const [editingWorkExperiences, setEditingWorkExperiences] = useState<WorkExperienceForm[]>([]);
   const [adding, setAdding] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +70,7 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
             experience: result.parsedData.experience || 0,
             location: result.parsedData.location || '',
             skills: result.parsedData.skills || [],
+            workExperience: result.parsedData.workExperience || [],
             resumePath: result.resumePath || '',
             resumeText: result.resumeText || '',
             isEditing: false,
@@ -81,14 +92,59 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
 
   const handleEditCandidate = (candidate: ParsedCandidate) => {
     setEditingCandidate({ ...candidate });
+    
+    // Convert work experience to form format
+    if (candidate.workExperience && candidate.workExperience.length > 0) {
+      const formattedExperiences = candidate.workExperience.map(exp => ({
+        company: exp.company || '',
+        position: exp.position || '',
+        duration: exp.duration || '',
+        description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+      }));
+      setEditingWorkExperiences(formattedExperiences);
+    } else {
+      setEditingWorkExperiences([{ company: '', position: '', duration: '', description: '' }]);
+    }
+  };
+
+  const handleWorkExperienceChange = (index: number, field: keyof WorkExperienceForm, value: string) => {
+    const updatedExperiences = [...editingWorkExperiences];
+    updatedExperiences[index][field] = value;
+    setEditingWorkExperiences(updatedExperiences);
+  };
+
+  const addWorkExperience = () => {
+    setEditingWorkExperiences([...editingWorkExperiences, { company: '', position: '', duration: '', description: '' }]);
+  };
+
+  const removeWorkExperience = (index: number) => {
+    if (editingWorkExperiences.length > 1) {
+      const updatedExperiences = [...editingWorkExperiences];
+      updatedExperiences.splice(index, 1);
+      setEditingWorkExperiences(updatedExperiences);
+    }
   };
 
   const handleSaveEdit = () => {
     if (editingCandidate) {
+      // Format work experiences for submission
+      const formattedWorkExperiences = editingWorkExperiences.map(exp => ({
+        company: exp.company,
+        position: exp.position,
+        duration: exp.duration,
+        description: exp.description
+      })).filter(exp => exp.company || exp.position || exp.duration || exp.description);
+      
+      const updatedCandidate = {
+        ...editingCandidate,
+        workExperience: formattedWorkExperiences
+      };
+      
       setParsedCandidates(prev =>
-        prev.map(c => (c.id === editingCandidate.id ? editingCandidate : c))
+        prev.map(c => (c.id === editingCandidate.id ? updatedCandidate : c))
       );
       setEditingCandidate(null);
+      setEditingWorkExperiences([]);
       toast.success('Candidate updated');
     }
   };
@@ -114,6 +170,11 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
       formData.append('location', candidate.location);
       formData.append('skills', candidate.skills.join(', '));
       formData.append('status', 'New');
+      
+      // Add work experience if available
+      if (candidate.workExperience && candidate.workExperience.length > 0) {
+        formData.append('workExperience', JSON.stringify(candidate.workExperience));
+      }
 
       await candidateApi.uploadResume(formData);
 
@@ -150,6 +211,11 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
           formData.append('location', candidate.location);
           formData.append('skills', candidate.skills.join(', '));
           formData.append('status', 'New');
+          
+          // Add work experience if available
+          if (candidate.workExperience && candidate.workExperience.length > 0) {
+            formData.append('workExperience', JSON.stringify(candidate.workExperience));
+          }
 
           await candidateApi.uploadResume(formData);
 
@@ -429,6 +495,92 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-600"
                 />
+              </div>
+
+              {/* Work Experience Section */}
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-medium text-gray-900">Work Experience</h3>
+                  <button
+                    type="button"
+                    onClick={addWorkExperience}
+                    className="flex items-center text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Experience
+                  </button>
+                </div>
+                
+                {editingWorkExperiences.map((exp, index) => (
+                  <div key={index} className="mb-4 p-4 border border-gray-200 rounded-lg">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-medium text-gray-700">Experience #{index + 1}</h4>
+                      {editingWorkExperiences.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeWorkExperience(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Company
+                        </label>
+                        <input
+                          type="text"
+                          value={exp.company}
+                          onChange={(e) => handleWorkExperienceChange(index, 'company', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600 text-sm"
+                          placeholder="Company Name"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Position
+                        </label>
+                        <input
+                          type="text"
+                          value={exp.position}
+                          onChange={(e) => handleWorkExperienceChange(index, 'position', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600 text-sm"
+                          placeholder="Position Title"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">
+                          Duration
+                        </label>
+                        <input
+                          type="text"
+                          value={exp.duration}
+                          onChange={(e) => handleWorkExperienceChange(index, 'duration', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600 text-sm"
+                          placeholder="JUN 2022 - JUL 2024"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={exp.description}
+                        onChange={(e) => handleWorkExperienceChange(index, 'description', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600 text-sm"
+                        rows={4}
+                        placeholder="Enter job responsibilities and achievements (one per line)"
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex space-x-3 pt-4">

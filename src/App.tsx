@@ -12,6 +12,7 @@ import ForgotPassword from './components/ForgotPassword';
 
 function MainLayout({ onSignOut }: { onSignOut: () => void }) {
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,11 +22,30 @@ function MainLayout({ onSignOut }: { onSignOut: () => void }) {
     const storedUser = localStorage.getItem('user');
     
     if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        // Check if token is expired
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        
+        if (payload.exp > currentTime) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          // Token is expired, sign out
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          onSignOut();
+        }
+      } catch (err) {
+        // Invalid token, sign out
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        onSignOut();
+      }
     } else {
       // If no token, trigger sign out
       onSignOut();
     }
+    setLoading(false);
   }, [onSignOut]);
 
   const handleSignOut = () => {
@@ -46,6 +66,14 @@ function MainLayout({ onSignOut }: { onSignOut: () => void }) {
   const handleTabChange = (tab: 'dashboard' | 'candidates' | 'jobs') => {
     navigate(`/${tab}`);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -70,14 +98,31 @@ function MainLayout({ onSignOut }: { onSignOut: () => void }) {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authView, setAuthView] = useState<'signin' | 'signup'>('signin');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is already logged in
     const token = localStorage.getItem('token');
     if (token) {
-      setIsAuthenticated(true);
+      try {
+        // Check if token is expired
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        
+        if (payload.exp > currentTime) {
+          setIsAuthenticated(true);
+        } else {
+          // Token is expired, remove it
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      } catch (err) {
+        // Invalid token, remove it
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
+    setLoading(false);
   }, []);
 
   const handleSignIn = (token: string, userData: any) => {
@@ -92,6 +137,14 @@ function App() {
     setIsAuthenticated(false);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       {!isAuthenticated ? (
@@ -99,13 +152,13 @@ function App() {
           <Route path="/signin" element={
             <SignIn 
               onSignIn={handleSignIn} 
-              onSwitchToSignUp={() => setAuthView('signup')} 
+              onSwitchToSignUp={() => {}} 
             />
           } />
           <Route path="/signup" element={
             <SignUp 
               onSignUp={handleSignUp} 
-              onSwitchToSignIn={() => setAuthView('signin')} 
+              onSwitchToSignIn={() => {}} 
             />
           } />
           <Route path="/forgot-password" element={<ForgotPassword />} />
