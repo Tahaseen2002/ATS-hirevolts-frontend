@@ -19,6 +19,7 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'jd' | 'candidates'>('jd');
 
   useEffect(() => {
     fetchJobDetails();
@@ -192,119 +193,152 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
         </div>
       </div>
 
-      <div className="space-y-4 sm:space-y-6">
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
-          <p className="text-sm sm:text-base text-gray-700">{job.description}</p>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
-          <ul className="space-y-2">
-            {job.requirements.map((req, index) => (
-              <li key={index} className="flex items-start space-x-2">
-                <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
-                <span className="text-sm sm:text-base text-gray-700">{req}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Status</h3>
-          <select
-            value={job.status}
-            onChange={(e) => handleStatusChange(e.target.value)}
-            disabled={statusUpdating}
-            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      {/* Tabs Navigation */}
+      <div className="border-t border-gray-200 mt-4 sm:mt-6">
+        <div className="flex border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('jd')}
+            className={`px-4 sm:px-6 py-3 text-sm sm:text-base font-medium transition-colors border-b-2 ${
+              activeTab === 'jd'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
           >
-            <option value="Open">Open</option>
-            <option value="Closed">Closed</option>
-            <option value="On Hold">On Hold</option>
-          </select>
+            JD
+          </button>
+          <button
+            onClick={() => setActiveTab('candidates')}
+            className={`px-4 sm:px-6 py-3 text-sm sm:text-base font-medium transition-colors border-b-2 ${
+              activeTab === 'candidates'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Applied Candidates
+          </button>
         </div>
 
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                Applied Candidates ({filteredCandidates.length}/{appliedCandidates.length})
-              </h3>
-            </div>
-            <button
-              onClick={() => setShowAddCandidateModal(true)}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 text-xs sm:text-sm hover:bg-blue-700 transition-colors whitespace-nowrap"
-            >
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Add Candidate</span>
-            </button>
-          </div>
-
-          {/* Filter Section */}
-          <div className="mb-4 flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-600" />
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-300 focus:outline-none focus:border-blue-600"
-            >
-              <option value="all">All Statuses</option>
-              {candidateStatuses.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2 sm:space-y-3">
-            {loading ? (
-              <div className="text-center py-4 text-gray-500 text-sm">Loading candidates...</div>
-            ) : filteredCandidates.length === 0 ? (
-              <div className="text-center py-4 text-gray-500 text-sm">
-                {statusFilter === 'all' ? 'No candidates applied yet' : `No candidates with status "${statusFilter}"`}
+        {/* Tab Content */}
+        <div className="pt-4 sm:pt-6">
+          {activeTab === 'jd' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
+                <p className="text-sm sm:text-base text-gray-700">{job.description}</p>
               </div>
-            ) : (
-              filteredCandidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                className="p-3 border border-gray-200 hover:border-blue-600 transition-colors"
-              >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{candidate.name}</h4>
-                    <p className="text-xs sm:text-sm text-gray-600">{candidate.position}</p>
-                  </div>
-                  <div className="flex items-center space-x-2 w-full sm:w-auto">
-                    <select
-                      value={candidate.status}
-                      onChange={(e) => handleCandidateStatusChange(candidate.id, e.target.value)}
-                      disabled={updatingCandidateId === candidate.id}
-                      className={`px-2 py-1 text-xs font-medium border border-gray-300 focus:outline-none focus:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(candidate.status)}`}
-                    >
-                      {candidateStatuses.map(status => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </div>
+
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
+                <ul className="space-y-2">
+                  {job.requirements.map((req, index) => (
+                    <li key={index} className="flex items-start space-x-2">
+                      <span className="w-1.5 h-1.5 bg-blue-600 rounded-full mt-2 flex-shrink-0"></span>
+                      <span className="text-sm sm:text-base text-gray-700">{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Status</h3>
+                <select
+                  value={job.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={statusUpdating}
+                  className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 focus:outline-none focus:border-blue-600 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="Open">Open</option>
+                  <option value="Closed">Closed</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
+              </div>
+
+              <div className="border-t border-gray-200 pt-4 sm:pt-6">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Actions</h3>
+                <div className="space-y-2">
+                  <button 
+                    onClick={handleDeleteJob}
+                    className="w-full border border-red-300 text-red-600 py-2 px-4 text-sm sm:text-base hover:bg-red-50 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Job</span>
+                  </button>
                 </div>
               </div>
-              ))
-            )}
-          </div>
-        </div>
+            </div>
+          )}
 
-        <div className="border-t border-gray-200 pt-4 sm:pt-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Actions</h3>
-          <div className="space-y-2">
-            <button 
-              onClick={handleDeleteJob}
-              className="w-full border border-red-300 text-red-600 py-2 px-4 text-sm sm:text-base hover:bg-red-50 transition-colors flex items-center justify-center space-x-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete Job</span>
-            </button>
-          </div>
+          {activeTab === 'candidates' && (
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+                    Applied Candidates ({filteredCandidates.length}/{appliedCandidates.length})
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowAddCandidateModal(true)}
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-3 py-1.5 text-xs sm:text-sm hover:bg-blue-700 transition-colors whitespace-nowrap"
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span>Add Candidate</span>
+                </button>
+              </div>
+
+              {/* Filter Section */}
+              <div className="mb-4 flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-600" />
+                <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 focus:outline-none focus:border-blue-600"
+                >
+                  <option value="all">All Statuses</option>
+                  {candidateStatuses.map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2 sm:space-y-3">
+                {loading ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">Loading candidates...</div>
+                ) : filteredCandidates.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    {statusFilter === 'all' ? 'No candidates applied yet' : `No candidates with status "${statusFilter}"`}
+                  </div>
+                ) : (
+                  filteredCandidates.map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="p-3 border border-gray-200 hover:border-blue-600 transition-colors"
+                    >
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm sm:text-base text-gray-900 truncate">{candidate.name}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">{candidate.position}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 w-full sm:w-auto">
+                          <select
+                            value={candidate.status}
+                            onChange={(e) => handleCandidateStatusChange(candidate.id, e.target.value)}
+                            disabled={updatingCandidateId === candidate.id}
+                            className={`px-2 py-1 text-xs font-medium border border-gray-300 focus:outline-none focus:border-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${getStatusColor(candidate.status)}`}
+                          >
+                            {candidateStatuses.map(status => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
