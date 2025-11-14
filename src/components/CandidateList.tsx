@@ -38,10 +38,19 @@ export default function CandidateList() {
         appliedDate: new Date(candidate.appliedDate).toISOString().split('T')[0],
         location: candidate.location,
         resumeUrl: candidate.resumeUrl,
-        viewUrl: candidate.viewUrl // Include viewUrl from backend
+        viewUrl: candidate.viewUrl, // Include viewUrl from backend
+        workExperience: candidate.workExperience || [] // Include work experience
       }));
       setCandidates(transformedData);
       setError('');
+      
+      // If we have a selected candidate, update it with fresh data
+      if (selectedCandidate) {
+        const updatedCandidate = transformedData.find((c: Candidate) => c.id === selectedCandidate.id);
+        if (updatedCandidate) {
+          setSelectedCandidate(updatedCandidate);
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch candidates');
       console.error('Error fetching candidates:', err);
