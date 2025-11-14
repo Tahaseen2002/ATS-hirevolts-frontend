@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, Plus, X, Grid3x3, List, Upload } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Plus, X, Grid3x3, List, Upload, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Candidate } from '../types';
 import CandidateDetail from './CandidateDetail';
 import AddCandidateModal from './AddCandidateModal';
@@ -16,10 +16,73 @@ export default function CandidateList() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Filter candidates based on search query
+  const filteredCandidates = useMemo(() => {
+    return candidates.filter((candidate) => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      const nameMatch = candidate.name.toLowerCase().includes(query);
+      const emailMatch = candidate.email.toLowerCase().includes(query);
+      const phoneMatch = candidate.phone.toLowerCase().includes(query);
+      const locationMatch = candidate.location.toLowerCase().includes(query);
+      const skillsMatch = candidate.skills.some((skill) => 
+        skill.toLowerCase().includes(query)
+      );
+      
+      return nameMatch || emailMatch || phoneMatch || locationMatch || skillsMatch;
+    });
+  }, [candidates, searchQuery]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCandidates = filteredCandidates.slice(startIndex, endIndex);
 
   useEffect(() => {
     fetchCandidates();
   }, []);
+
+  // Auto-select first candidate when candidates are initially loaded
+  useEffect(() => {
+    if (candidates.length > 0 && !selectedCandidate) {
+      setSelectedCandidate(candidates[0]);
+    }
+  }, [candidates, selectedCandidate]);
+
+  // Update selected candidate when candidates list is refreshed
+  useEffect(() => {
+    if (selectedCandidate && candidates.length > 0) {
+      const updatedCandidate = candidates.find((c) => c.id === selectedCandidate.id);
+      if (updatedCandidate) {
+        setSelectedCandidate(updatedCandidate);
+      }
+    }
+  }, [candidates, selectedCandidate]);
+
+  // Handle selection when filtered results change
+  useEffect(() => {
+    if (selectedCandidate && filteredCandidates.length > 0) {
+      // If selected candidate is not in filtered results, select first filtered candidate
+      const isSelectedInFiltered = filteredCandidates.some(candidate => candidate.id === selectedCandidate.id);
+      if (!isSelectedInFiltered) {
+        setSelectedCandidate(filteredCandidates[0]);
+        setCurrentPage(1); // Reset to first page when selection changes
+      }
+    } else if (filteredCandidates.length === 0 && selectedCandidate) {
+      // Clear selection if no filtered results
+      setSelectedCandidate(null);
+    }
+  }, [filteredCandidates, selectedCandidate]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const fetchCandidates = async () => {
     try {
@@ -43,14 +106,6 @@ export default function CandidateList() {
       }));
       setCandidates(transformedData);
       setError('');
-      
-      // If we have a selected candidate, update it with fresh data
-      if (selectedCandidate) {
-        const updatedCandidate = transformedData.find((c: Candidate) => c.id === selectedCandidate.id);
-        if (updatedCandidate) {
-          setSelectedCandidate(updatedCandidate);
-        }
-      }
     } catch (err: any) {
       setError(err.message || 'Failed to fetch candidates');
       console.error('Error fetching candidates:', err);
@@ -58,6 +113,20 @@ export default function CandidateList() {
       setLoading(false);
     }
   };
+
+  // Update selected candidate when candidates list is refreshed
+  useEffect(() => {
+    if (selectedCandidate && candidates.length > 0) {
+      const updatedCandidate = candidates.find((c) => c.id === selectedCandidate.id);
+      if (updatedCandidate) {
+        // Update with fresh data from the server
+        setSelectedCandidate(updatedCandidate);
+      } else {
+        // If selected candidate no longer exists in the list, clear selection
+        setSelectedCandidate(null);
+      }
+    }
+  }, [candidates, selectedCandidate]);
 
   const handleAddSuccess = () => {
     fetchCandidates(); // Refresh the list
@@ -72,13 +141,6 @@ export default function CandidateList() {
     setShowAddModal(false);
     setEditingCandidate(null);
   };
-
-  const filteredCandidates = candidates.filter(
-    (candidate) =>
-      candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      candidate.position.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -134,7 +196,7 @@ export default function CandidateList() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search candidates..."
+              placeholder="Search by name, skills, location, email, or phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
@@ -173,14 +235,43 @@ export default function CandidateList() {
               <div className="text-gray-500">Loading candidates...</div>
             </div>
           ) : filteredCandidates.length === 0 ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">
-                {searchQuery ? 'No candidates found matching your search' : 'No candidates yet. Add your first candidate!'}
-              </div>
+            <div className="flex flex-col items-center justify-center h-64 px-4">
+              {searchQuery ? (
+                <div className="text-gray-500 text-center">
+                  No candidates found matching your search
+                </div>
+              ) : (
+                <>
+                  <div className="text-gray-400 mb-4">
+                    <Users className="w-16 h-16" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No candidates yet</h3>
+                  <p className="text-gray-500 text-center mb-6 max-w-md">
+                    Get started by adding your first candidate to the system. You can add candidates individually or upload them in bulk.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="flex items-center justify-center space-x-2 bg-blue-600 text-white px-6 py-2 hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>Add Candidate</span>
+                    </button>
+                    <button
+                      onClick={() => setShowBulkUploadModal(true)}
+                      className="flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-2 hover:bg-green-700 transition-colors"
+                    >
+                      <Upload className="w-5 h-5" />
+                      <span>Bulk Upload</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ) : viewMode === 'card' ? (
-            <div className="p-4 space-y-3">
-              {filteredCandidates.map((candidate) => (
+            <>
+              <div className="p-4 space-y-3">
+                {paginatedCandidates.map((candidate) => (
                 <div
                   key={candidate.id}
                   onClick={() => setSelectedCandidate(candidate)}
@@ -212,23 +303,74 @@ export default function CandidateList() {
                     <span className="text-xs text-gray-400">Applied: {candidate.appliedDate}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredCandidates.length)} of {filteredCandidates.length} candidates
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                          return <span key={page} className="px-2 text-gray-500">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-white border-b-2 border-gray-300">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Experience</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCandidates.map((candidate) => (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-white border-b-2 border-gray-300">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Position</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Experience</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedCandidates.map((candidate) => (
                     <tr
                       key={candidate.id}
                       onClick={() => setSelectedCandidate(candidate)}
@@ -249,10 +391,60 @@ export default function CandidateList() {
                         </span>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(endIndex, filteredCandidates.length)} of {filteredCandidates.length} candidates
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white border-blue-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                          return <span key={page} className="px-2 text-gray-500">...</span>;
+                        }
+                        return null;
+                      })}
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

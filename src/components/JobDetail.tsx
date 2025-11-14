@@ -157,20 +157,9 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6">
       <div className="mb-6">
-        <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{job.title}</h2>
-            <p className="text-base sm:text-lg text-gray-600">{job.department}</p>
-          </div>
-          {onEdit && (
-            <button 
-              onClick={() => onEdit(job)}
-              className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors whitespace-nowrap flex items-center space-x-2"
-            >
-              <Edit className="w-4 h-4" />
-              <span>Edit Job</span>
-            </button>
-          )}
+        <div className="mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">{job.title}</h2>
+          <p className="text-base sm:text-lg text-gray-600">{job.department}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -188,7 +177,7 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
             <DollarSign className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm truncate">{job.salary}</span>
+            <span className="text-xs sm:text-sm truncate">{job.salary ? job.salary.replace(/\$/g, '₹') : ''}</span>
           </div>
         </div>
       </div>
@@ -224,7 +213,7 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             <div className="space-y-4 sm:space-y-6">
               <div>
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
-                <p className="text-sm sm:text-base text-gray-700">{job.description}</p>
+                <p className="text-sm sm:text-base text-gray-700 whitespace-pre-wrap break-words">{job.description}</p>
               </div>
 
               <div className="border-t border-gray-200 pt-4 sm:pt-6">
@@ -256,6 +245,15 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
               <div className="border-t border-gray-200 pt-4 sm:pt-6">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Actions</h3>
                 <div className="space-y-2">
+                  {onEdit && (
+                    <button 
+                      onClick={() => onEdit(job)}
+                      className="w-full bg-blue-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span>Edit Job</span>
+                    </button>
+                  )}
                   <button 
                     onClick={handleDeleteJob}
                     className="w-full border border-red-300 text-red-600 py-2 px-4 text-sm sm:text-base hover:bg-red-50 transition-colors flex items-center justify-center space-x-2"

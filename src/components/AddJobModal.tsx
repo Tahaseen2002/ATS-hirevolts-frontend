@@ -40,10 +40,22 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
   }, [editJob]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    // Special handling for salary field - only allow numbers, commas, spaces, dashes, and rupee symbol
+    if (name === 'salary') {
+      // Allow only numbers, commas, spaces, dashes, and rupee symbol
+      const numericValue = value.replace(/[^0-9,\s\-₹]/g, '');
+      setFormData({
+        ...formData,
+        [name]: numericValue
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,8 +193,10 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
                 value={formData.salary}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
-                placeholder="$100,000 - $130,000"
+                placeholder="₹10,00,000 - ₹13,00,000"
                 required
+                pattern="[0-9,\s\-₹]+"
+                title="Only numbers, commas, spaces, dashes, and rupee symbol are allowed"
               />
             </div>
           </div>
