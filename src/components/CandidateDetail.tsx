@@ -1,15 +1,16 @@
-import { Mail, Phone, MapPin, Calendar, Award, FileText, Briefcase, ExternalLink, Edit } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, Award, FileText, Briefcase, ExternalLink, Edit, Trash2, X } from 'lucide-react';
 import { Candidate, WorkExperience } from '../types';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { jobApi } from '../api';
+import { jobApi, candidateApi } from '../api';
 
 interface CandidateDetailProps {
   candidate: Candidate;
   onEdit?: (candidate: Candidate) => void;
+  onDelete?: () => void;
 }
 
-export default function CandidateDetail({ candidate, onEdit }: CandidateDetailProps) {
+export default function CandidateDetail({ candidate, onEdit, onDelete }: CandidateDetailProps) {
   const [candidateData, setCandidateData] = useState<Candidate>(candidate);
   const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
   const [availableJobs, setAvailableJobs] = useState<any[]>([]);
@@ -17,6 +18,7 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [activeTab, setActiveTab] = useState<'detail' | 'appliedJobs'>('detail');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Update candidate data when prop changes
   useEffect(() => {
@@ -125,6 +127,20 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
     if (candidateData.resumeUrl) {
       // For download, we can use the direct Cloudinary URL
       window.open(candidateData.resumeUrl, '_blank');
+    }
+  };
+
+  const handleDeleteCandidate = async () => {
+    try {
+      await candidateApi.delete(candidateData.id);
+      toast.success('Candidate deleted successfully!');
+      // Optionally, redirect or refresh the list of candidates
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (err) {
+      console.error('Error deleting candidate:', err);
+      toast.error('Failed to delete candidate');
     }
   };
 
@@ -283,6 +299,13 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
                       Download Resume
                     </button>
                   )}
+                  <button 
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full bg-red-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-red-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Candidate</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -362,6 +385,43 @@ export default function CandidateDetail({ candidate, onEdit }: CandidateDetailPr
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{candidateData.name}</span>? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleDeleteCandidate();
+                  setShowDeleteModal(false);
+                }}
+                className="flex-1 bg-red-600 text-white py-2 px-4 hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

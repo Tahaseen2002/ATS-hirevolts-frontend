@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Plus, X, Grid3x3, List, Upload, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, X, Grid3x3, List, Upload, Users, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { Candidate } from '../types';
 import CandidateDetail from './CandidateDetail';
 import AddCandidateModal from './AddCandidateModal';
 import BulkUploadModal from './BulkUploadModal';
 import { candidateApi } from '../api';
+import toast from 'react-hot-toast';
 
 export default function CandidateList() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,6 +160,17 @@ export default function CandidateList() {
     }
   };
 
+  const handleDelete = async (candidate: Candidate) => {
+    try {
+      await candidateApi.delete(candidate.id);
+      toast.success('Candidate deleted successfully');
+      fetchCandidates();
+    } catch (err: any) {
+      toast.error('Failed to delete candidate');
+      console.error('Error deleting candidate:', err);
+    }
+  };
+
   return (
     <div className="flex h-full">
       <div
@@ -283,13 +295,26 @@ export default function CandidateList() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-semibold text-gray-900">{candidate.name}</h3>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium ${getStatusColor(
-                        candidate.status
-                      )}`}
-                    >
-                      {candidate.status}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`px-2 py-1 text-xs font-medium ${getStatusColor(
+                          candidate.status
+                        )}`}
+                      >
+                        {candidate.status}
+                      </span>
+                      {/* <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm('Are you sure you want to delete this candidate?')) {
+                            handleDelete(candidate);
+                          }
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button> */}
+                    </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-2 font-medium">{candidate.position}</p>
                   <p className="text-sm text-gray-500 mb-1">{candidate.email}</p>
@@ -367,6 +392,7 @@ export default function CandidateList() {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Experience</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -389,6 +415,19 @@ export default function CandidateList() {
                         <span className={`px-2 py-1 text-xs font-medium ${getStatusColor(candidate.status)}`}>
                           {candidate.status}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Are you sure you want to delete this candidate?')) {
+                              handleDelete(candidate);
+                            }
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                     ))}
@@ -460,6 +499,10 @@ export default function CandidateList() {
           <CandidateDetail 
             candidate={selectedCandidate} 
             onEdit={handleEdit}
+            onDelete={() => {
+              setSelectedCandidate(null);
+              fetchCandidates();
+            }}
           />
         </div>
       )}

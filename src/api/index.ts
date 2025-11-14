@@ -22,7 +22,13 @@ export const candidateApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(candidateData)
     });
-    if (!response.ok) throw new Error('Failed to create candidate');
+    if (!response.ok) {
+      const error = await response.json();
+      // Create a new Error object with both message and error properties
+      const err = new Error(error.message || 'Failed to create candidate');
+      (err as any).error = error.error; // Attach the error property
+      throw err;
+    }
     return response.json();
   },
 
@@ -34,7 +40,10 @@ export const candidateApi = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to upload resume');
+      // Create a new Error object with both message and error properties
+      const err = new Error(error.message || 'Failed to upload resume');
+      (err as any).error = error.error; // Attach the error property
+      throw err;
     }
     return response.json();
   },
@@ -49,7 +58,10 @@ export const candidateApi = {
     });
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to parse resume');
+      // Create a new Error object with both message and error properties
+      const err = new Error(error.message || 'Failed to parse resume');
+      (err as any).error = error.error; // Attach the error property
+      throw err;
     }
     return response.json();
   },
