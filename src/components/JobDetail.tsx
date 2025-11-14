@@ -1,9 +1,10 @@
-import { MapPin, Calendar, DollarSign, Briefcase, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { MapPin, Calendar, Briefcase, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { Job } from '../types';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import AddCandidateToJobModal from './AddCandidateToJobModal';
 import { jobApi, candidateApi } from '../api';
+import RupeeSymbol from './RupeeSymbol';
 
 interface JobDetailProps {
   job: Job;
@@ -176,8 +177,14 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             <span className="text-xs sm:text-sm">Posted: {job.postedDate}</span>
           </div>
           <div className="flex items-center space-x-2 text-gray-600">
-            <DollarSign className="w-4 h-4 flex-shrink-0" />
-            <span className="text-xs sm:text-sm truncate">{job.salary ? job.salary.replace(/\$/g, '₹') : ''}</span>
+            <span className="text-xs sm:text-sm truncate rupee-symbol flex items-center">
+              {job.salary ? (
+                <>
+                  <RupeeSymbol />
+                  <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
+                </>
+              ) : ''}
+            </span>
           </div>
         </div>
       </div>

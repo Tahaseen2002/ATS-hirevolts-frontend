@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Grid3x3, List, Search, Briefcase, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, Grid3x3, List, Search, Briefcase, ChevronLeft, ChevronRight, MapPin, FileText } from 'lucide-react';
 import { Job } from '../types';
 import JobDetail from './JobDetail';
 import AddJobModal from './AddJobModal';
 import { jobApi } from '../api';
+import RupeeSymbol from './RupeeSymbol';
 
 export default function JobList() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -270,13 +271,23 @@ export default function JobList() {
                     >
                       {job.type}
                     </span>
-                    <span className="text-xs text-gray-500">{job.location}</span>
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                      <span className="text-xs text-gray-500">{job.location}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">{job.description}</p>
+                  <div className="flex items-start space-x-2 mb-2">
+                    <FileText className="w-3 h-3 text-gray-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-gray-600 line-clamp-2">{job.description}</p>
+                  </div>
                   <div className="flex items-center space-x-2 mb-2">
-                    <DollarSign className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                    <span className="text-xs font-medium text-gray-700">
-                      {job.salary ? job.salary.replace(/\$/g, '₹') : ''}
+                    <span className="text-xs font-medium text-gray-700 rupee-symbol flex items-center">
+                      {job.salary ? (
+                        <>
+                          <RupeeSymbol />
+                          <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
+                        </>
+                      ) : ''}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -375,7 +386,14 @@ export default function JobList() {
                           {job.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{job.salary.replace(/\$/g, '₹')}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {job.salary ? (
+                          <span className="rupee-symbol flex items-center">
+                            <RupeeSymbol />
+                            <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
+                          </span>
+                        ) : ''}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 text-xs font-medium ${getStatusColor(job.status)}`}>
                           {job.status}
