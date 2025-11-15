@@ -104,12 +104,15 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <UserPlus className="w-8 h-8 text-white" />
+        <div className="text-center mb-8"><div className="inline-flex items-center justify-center w-32 sm:w-32 h-8 sm:h-10 overflow-hidden mb-4">
+            <img
+                src="/hirevolts-logo-DHaFBxL3.svg"
+                alt="ATS Portal Logo"
+                className="w-20 sm:w-32 h-20 sm:h-32"
+              />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join the recruitment platform</p>
+          <p className="text-gray-600">Join the ATS-Portal</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -121,7 +124,7 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -136,7 +139,7 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address
+              Email Address <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -151,7 +154,7 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Role
+              Role <span className="text-red-500">*</span>
             </label>
             <select
               name="role"
@@ -166,7 +169,7 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
+              Password <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
@@ -205,7 +208,7 @@ export default function SignUp({ onSignUp, onSwitchToSignIn }: SignUpProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
+              Confirm Password <span className="text-red-500">*</span>
             </label>
             <input
               type="password"
