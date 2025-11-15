@@ -2,6 +2,7 @@ import { X, Upload, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { candidateApi } from '../api';
 import { Candidate, WorkExperience } from '../types';
+import toast from 'react-hot-toast';
 
 interface AddCandidateModalProps {
   onClose: () => void;
@@ -141,6 +142,7 @@ export default function AddCandidateModal({ onClose, onSuccess, editCandidate }:
     e.preventDefault();
     setLoading(true);
     setError('');
+    
 
     try {
       // Format work experiences for submission - keeping description as string for backend
@@ -198,7 +200,22 @@ export default function AddCandidateModal({ onClose, onSuccess, editCandidate }:
         onClose();
       }
     } catch (err: any) {
-      setError(err.message || (editCandidate ? 'Failed to update candidate' : 'Failed to add candidate'));
+      // Handle duplicate email error specifically
+      // Check both err.message and err.error for the duplicate key error
+      const errorMessage = err.message || '';
+      const errorDetail = err.error || '';
+      
+      if (errorMessage.includes('E11000 duplicate key error') || errorDetail.includes('E11000 duplicate key error')) {
+        toast.error('Candidate already present in list', {
+          duration: 2000
+        });
+        // Close the modal after 2 seconds
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        setError(err.message || (editCandidate ? 'Failed to update candidate' : 'Failed to add candidate'));
+      }
     } finally {
       setLoading(false);
     }

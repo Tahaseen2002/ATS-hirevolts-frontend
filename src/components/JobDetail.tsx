@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Briefcase, Users, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { MapPin, Calendar, Briefcase, Users, Plus, Edit, Trash2, Filter, X } from 'lucide-react';
 import { Job } from '../types';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -21,6 +21,7 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingCandidateId, setUpdatingCandidateId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'jd' | 'candidates'>('jd');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     fetchJobDetails();
@@ -137,10 +138,11 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
   const candidateStatuses = ['Screening', 'Interview', 'Offer', 'Hired', 'Rejected', ];
 
   const handleDeleteJob = async () => {
-    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-      return;
-    }
+    // Show the confirmation modal instead of using confirm dialog
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteJob = async () => {
     try {
       await jobApi.delete(job.id);
       toast.success('Job deleted successfully!');
@@ -152,6 +154,8 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
     } catch (err) {
       console.error('Error deleting job:', err);
       toast.error('Failed to delete job');
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
@@ -357,6 +361,40 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             onRefresh?.();
           }}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Confirm Deletion</h3>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete <span className="font-semibold">{job.title}</span>? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteJob}
+                className="flex-1 bg-red-600 text-white py-2 px-4 hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

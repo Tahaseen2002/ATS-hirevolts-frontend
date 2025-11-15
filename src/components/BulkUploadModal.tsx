@@ -99,7 +99,7 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
         company: exp.company || '',
         position: exp.position || '',
         duration: exp.duration || '',
-        description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+        description: Array.isArray(exp.description) ? exp.description.join('\n').trim() : (exp.description || '')
       }));
       setEditingWorkExperiences(formattedExperiences);
     } else {
@@ -127,12 +127,12 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
 
   const handleSaveEdit = () => {
     if (editingCandidate) {
-      // Format work experiences for submission
+      // Format work experiences for submission - keeping description as string for backend
       const formattedWorkExperiences = editingWorkExperiences.map(exp => ({
         company: exp.company,
         position: exp.position,
         duration: exp.duration,
-        description: exp.description
+        description: exp.description // Keep as string, not array
       })).filter(exp => exp.company || exp.position || exp.duration || exp.description);
       
       const updatedCandidate = {
@@ -151,6 +151,10 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
 
   const handleAddSingleCandidate = async (candidate: ParsedCandidate) => {
     setAdding(true);
+    
+    // Test toast to verify the system is working
+    // toast.success('Bulk upload toast system working!');
+
     try {
       // Find the original file for this candidate
       const fileIndex = parsedCandidates.indexOf(candidate);
@@ -172,8 +176,15 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
       formData.append('status', 'New');
       
       // Add work experience if available
+      // Ensure description is sent as string, not array
       if (candidate.workExperience && candidate.workExperience.length > 0) {
-        formData.append('workExperience', JSON.stringify(candidate.workExperience));
+        const formattedWorkExperiences = candidate.workExperience.map(exp => ({
+          company: exp.company || '',
+          position: exp.position || '',
+          duration: exp.duration || '',
+          description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+        }));
+        formData.append('workExperience', JSON.stringify(formattedWorkExperiences));
       }
 
       await candidateApi.uploadResume(formData);
@@ -184,7 +195,22 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
 
       toast.success(`${candidate.name} added successfully!`);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to add candidate');
+      // Handle duplicate email error specifically
+      // Check both err.message and err.error for the duplicate key error
+      const errorMessage = err.message || '';
+      const errorDetail = err.error || '';
+      
+      if (errorMessage.includes('E11000 duplicate key error') || errorDetail.includes('E11000 duplicate key error')) {
+        toast.error('Candidate already present in list', {
+          duration: 2000
+        });
+        // Mark as added to prevent further attempts
+        setParsedCandidates(prev =>
+          prev.map(c => (c.id === candidate.id ? { ...c, isAdded: true } : c))
+        );
+      } else {
+        toast.error(err.message || 'Failed to add candidate');
+      }
     } finally {
       setAdding(false);
     }
@@ -201,33 +227,65 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
         const file = files[fileIndex];
 
         if (file) {
-          const formData = new FormData();
-          formData.append('resume', file);
-          formData.append('name', candidate.name);
-          formData.append('email', candidate.email);
-          formData.append('phone', candidate.phone);
-          formData.append('position', candidate.position);
-          formData.append('experience', candidate.experience.toString());
-          formData.append('location', candidate.location);
-          formData.append('skills', candidate.skills.join(', '));
-          formData.append('status', 'New');
-          
-          // Add work experience if available
-          if (candidate.workExperience && candidate.workExperience.length > 0) {
-            formData.append('workExperience', JSON.stringify(candidate.workExperience));
+          try {
+            const formData = new FormData();
+            formData.append('resume', file);
+            formData.append('name', candidate.name);
+            formData.append('email', candidate.email);
+            formData.append('phone', candidate.phone);
+            formData.append('position', candidate.position);
+            formData.append('experience', candidate.experience.toString());
+            formData.append('location', candidate.location);
+            formData.append('skills', candidate.skills.join(', '));
+            formData.append('status', 'New');
+            
+            // Add work experience if available
+            // Ensure description is sent as string, not array
+            if (candidate.workExperience && candidate.workExperience.length > 0) {
+              const formattedWorkExperiences = candidate.workExperience.map(exp => ({
+                company: exp.company || '',
+                position: exp.position || '',
+                duration: exp.duration || '',
+                description: Array.isArray(exp.description) ? exp.description.join('\n') : exp.description || ''
+              }));
+              formData.append('workExperience', JSON.stringify(formattedWorkExperiences));
+            }
+
+            await candidateApi.uploadResume(formData);
+
+            setParsedCandidates(prev =>
+              prev.map(c => (c.id === candidate.id ? { ...c, isAdded: true } : c))
+            );
+          } catch (err: any) {
+            // Handle duplicate email error specifically
+            // Check both err.message and err.error for the duplicate key error
+            const errorMessage = err.message || '';
+            const errorDetail = err.error || '';
+            
+            if (errorMessage.includes('E11000 duplicate key error') || errorDetail.includes('E11000 duplicate key error')) {
+              toast.error('Candidate already present in list', {
+                duration: 2000
+              });
+              // Mark as added to prevent further attempts
+              setParsedCandidates(prev =>
+                prev.map(c => (c.id === candidate.id ? { ...c, isAdded: true } : c))
+              );
+            } else {
+              toast.error(`Error adding ${candidate.name}: ${err.message}`);
+            }
           }
-
-          await candidateApi.uploadResume(formData);
-
-          setParsedCandidates(prev =>
-            prev.map(c => (c.id === candidate.id ? { ...c, isAdded: true } : c))
-          );
         }
       }
 
-      toast.success('All candidates added successfully!');
-      onSuccess?.();
-      setTimeout(() => onClose(), 1500);
+      // Check if all candidates were processed
+      const remainingNotAdded = parsedCandidates.filter(c => !c.isAdded).length;
+      if (remainingNotAdded === 0) {
+        toast.success('All candidates processed successfully!');
+        onSuccess?.();
+        setTimeout(() => onClose(), 1500);
+      } else {
+        toast.success('Candidates processed. Some already existed in the system.');
+      }
     } catch (err: any) {
       toast.error('Error adding candidates');
     } finally {
