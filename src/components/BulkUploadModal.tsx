@@ -153,7 +153,7 @@ export default function BulkUploadModal({ onClose, onSuccess }: BulkUploadModalP
     setAdding(true);
     
     // Test toast to verify the system is working
-    toast.success('Bulk upload toast system working!');
+    // toast.success('Bulk upload toast system working!');
 
     try {
       // Find the original file for this candidate
