@@ -31,6 +31,9 @@ export interface Job {
   description: string;
   requirements: string[];
   salary: string;
+  minSalary?: number;
+  maxSalary?: number;
+  client?: string;
   postedDate: string;
   appliedCandidates: string[];
 }

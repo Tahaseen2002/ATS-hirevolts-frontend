@@ -16,7 +16,10 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
     location: '',
     type: 'Full-time',
     status: 'Open',
-    salary: '',
+    minSalary: '',
+    maxSalary: '',
+    client: '',
+    salary: '', // Kept for backward compatibility
     description: '',
     requirements: ''
   });
@@ -32,6 +35,9 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
         location: editJob.location,
         type: editJob.type,
         status: editJob.status,
+        minSalary: editJob.minSalary?.toString() || '',
+        maxSalary: editJob.maxSalary?.toString() || '',
+        client: editJob.client || '',
         salary: editJob.salary,
         description: editJob.description,
         requirements: editJob.requirements.join('\n')
@@ -41,21 +47,10 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
-    // Special handling for salary field - only allow numbers, commas, spaces, dashes, and rupee symbol
-    if (name === 'salary') {
-      // Allow only numbers, commas, spaces, dashes, and rupee symbol
-      const numericValue = value.replace(/[^0-9,\s\-₹]/g, '');
-      setFormData({
-        ...formData,
-        [name]: numericValue
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
+    setFormData({
+      ...formData,
+      [name]: value
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,8 +59,16 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
     setError('');
 
     try {
+      // Format the salary data for backward compatibility
+      const salaryRange = formData.minSalary && formData.maxSalary 
+        ? `₹${parseInt(formData.minSalary).toLocaleString()} - ₹${parseInt(formData.maxSalary).toLocaleString()}`
+        : '';
+
       const jobData = {
         ...formData,
+        salary: salaryRange, // Maintain backward compatibility
+        minSalary: formData.minSalary ? parseInt(formData.minSalary) : undefined,
+        maxSalary: formData.maxSalary ? parseInt(formData.maxSalary) : undefined,
         requirements: formData.requirements.split('\n').map(r => r.trim()).filter(r => r)
       };
 
@@ -83,6 +86,7 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
       setLoading(false);
     }
   };
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -151,6 +155,21 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Client *
+              </label>
+              <input
+                type="text"
+                name="client"
+                value={formData.client}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                placeholder="Tech Innovations Inc."
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Job Type *
               </label>
               <select 
@@ -185,18 +204,31 @@ export default function AddJobModal({ onClose, onSuccess, editJob }: AddJobModal
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Salary Range *
+                Minimum Salary *
               </label>
               <input
-                type="text"
-                name="salary"
-                value={formData.salary}
+                type="number"
+                name="minSalary"
+                value={formData.minSalary}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
-                placeholder="₹10,00,000 - ₹13,00,000"
+                placeholder="120000"
                 required
-                pattern="[0-9,\s\-₹]+"
-                title="Only numbers, commas, spaces, dashes, and rupee symbol are allowed"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Maximum Salary *
+              </label>
+              <input
+                type="number"
+                name="maxSalary"
+                value={formData.maxSalary}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
+                placeholder="180000"
+                required
               />
             </div>
           </div>

@@ -27,12 +27,13 @@ export default function JobList() {
       const query = searchQuery.toLowerCase();
       const titleMatch = job.title.toLowerCase().includes(query);
       const locationMatch = job.location.toLowerCase().includes(query);
+      const clientMatch = job.client?.toLowerCase().includes(query) || false;
       const salaryMatch = job.salary.toLowerCase().includes(query);
       const requirementsMatch = job.requirements.some((req) => 
         req.toLowerCase().includes(query)
       );
       
-      return titleMatch || locationMatch || salaryMatch || requirementsMatch;
+      return titleMatch || locationMatch || clientMatch || salaryMatch || requirementsMatch;
     });
   }, [jobs, searchQuery]);
 
@@ -95,6 +96,9 @@ export default function JobList() {
           description: job.description,
           requirements: job.requirements || [],
           salary: job.salary,
+          minSalary: job.minSalary,
+          maxSalary: job.maxSalary,
+          client: job.client,
           postedDate: new Date(job.postedDate).toISOString().split('T')[0],
           appliedCandidates: candidateIds
         };
@@ -177,7 +181,7 @@ export default function JobList() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search by job name, skills, location, or salary..."
+              placeholder="Search by job name, client, skills, location, or salary..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 focus:outline-none focus:border-blue-600"
@@ -282,7 +286,12 @@ export default function JobList() {
                   </div>
                   <div className="flex items-center space-x-2 mb-2">
                     <span className="text-xs font-medium text-gray-700 rupee-symbol flex items-center">
-                      {job.salary ? (
+                      {job.minSalary && job.maxSalary ? (
+                        <>
+                          <RupeeSymbol />
+                          <span className="ml-0.5">{job.minSalary.toLocaleString()} - <RupeeSymbol />{job.maxSalary.toLocaleString()}</span>
+                        </>
+                      ) : job.salary ? (
                         <>
                           <RupeeSymbol />
                           <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
@@ -359,7 +368,7 @@ export default function JobList() {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Department</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Salary</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Salary Range</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Applicants</th>
                     </tr>
@@ -387,7 +396,12 @@ export default function JobList() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        {job.salary ? (
+                        {job.minSalary && job.maxSalary ? (
+                          <span className="rupee-symbol flex items-center">
+                            <RupeeSymbol />
+                            <span className="ml-0.5">{job.minSalary.toLocaleString()} - <RupeeSymbol />{job.maxSalary.toLocaleString()}</span>
+                          </span>
+                        ) : job.salary ? (
                           <span className="rupee-symbol flex items-center">
                             <RupeeSymbol />
                             <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>

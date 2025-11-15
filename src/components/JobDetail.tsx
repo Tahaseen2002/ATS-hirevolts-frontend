@@ -180,9 +180,19 @@ export default function JobDetail({ job, onEdit, onRefresh, onClose }: JobDetail
             <Calendar className="w-4 h-4 flex-shrink-0" />
             <span className="text-xs sm:text-sm">Posted: {job.postedDate}</span>
           </div>
+          {job.client && (
+            <div className="flex items-center space-x-2 text-gray-600">
+              <span className="text-xs sm:text-sm">Client: {job.client}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-2 text-gray-600">
             <span className="text-xs sm:text-sm truncate rupee-symbol flex items-center">
-              {job.salary ? (
+              {job.minSalary && job.maxSalary ? (
+                <>
+                  <RupeeSymbol />
+                  <span className="ml-0.5">{job.minSalary.toLocaleString()} - <RupeeSymbol />{job.maxSalary.toLocaleString()}</span>
+                </>
+              ) : job.salary ? (
                 <>
                   <RupeeSymbol />
                   <span className="ml-0.5">{job.salary.replace(/\$/g, '').trim()}</span>
