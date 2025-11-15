@@ -324,7 +324,7 @@ export default function CandidateList() {
                   <p className="text-sm text-gray-600 mb-2 font-medium">{candidate.position}</p>
                   <p className="text-sm text-gray-500 mb-1">{candidate.email}</p>
                   <p className="text-sm text-gray-500 mb-3">{candidate.phone}</p>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <span className="text-xs text-gray-500">{candidate.experience} years</span>
                       <span className="text-xs text-gray-400">•</span>
@@ -332,6 +332,13 @@ export default function CandidateList() {
                     </div>
                     <span className="text-xs text-gray-400">Applied: {candidate.appliedDate}</span>
                   </div>
+                  {candidate.skills && candidate.skills.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500">
+                        <span className="font-medium">Skills:</span> {candidate.skills.join(', ')}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 ))}
               </div>
@@ -396,6 +403,7 @@ export default function CandidateList() {
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Experience</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Skills</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
                     </tr>
@@ -419,6 +427,11 @@ export default function CandidateList() {
                       <td className="px-4 py-3 text-sm text-gray-600">{candidate.email}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{candidate.experience} years</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{candidate.location}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {candidate.skills && candidate.skills.length > 0 
+                          ? candidate.skills.join(', ') 
+                          : '-'}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 text-xs font-medium ${getStatusColor(candidate.status)}`}>
                           {candidate.status}
